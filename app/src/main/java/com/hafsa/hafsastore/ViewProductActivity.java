@@ -2,6 +2,7 @@ package com.hafsa.hafsastore;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -19,6 +20,7 @@ public class ViewProductActivity extends AppCompatActivity {
 
     //widgets
     private ViewPager mProductContainer;
+    private TabLayout mTabLayout;
     //vars
     private Product mProduct;
     private ProductPagerAdapter mPagerAdapter;
@@ -28,6 +30,7 @@ public class ViewProductActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_product);
         mProductContainer = findViewById(R.id.image_container);
+        mTabLayout = findViewById(R.id.tab_layout);
         getIncomingIntent();
         initPagerAdapter();
     }
@@ -54,5 +57,6 @@ public class ViewProductActivity extends AppCompatActivity {
 
         mPagerAdapter = new ProductPagerAdapter(getSupportFragmentManager(), fragments);
         mProductContainer.setAdapter(mPagerAdapter);
+        mTabLayout.setupWithViewPager(mProductContainer, true);
     }
 }
