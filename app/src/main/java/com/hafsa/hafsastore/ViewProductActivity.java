@@ -6,6 +6,9 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 
 import com.hafsa.hafsastore.adapter.ProductPagerAdapter;
 import com.hafsa.hafsastore.fragments.ViewProductFragment;
@@ -14,7 +17,7 @@ import com.hafsa.hafsastore.resources.Products;
 
 import java.util.ArrayList;
 
-public class ViewProductActivity extends AppCompatActivity {
+public class ViewProductActivity extends AppCompatActivity implements View.OnTouchListener {
 
     private static final String TAG = "ViewProductActivity";
 
@@ -31,6 +34,7 @@ public class ViewProductActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_product);
         mProductContainer = findViewById(R.id.image_container);
         mTabLayout = findViewById(R.id.tab_layout);
+        mProductContainer.setOnTouchListener(this);
         getIncomingIntent();
         initPagerAdapter();
     }
@@ -58,5 +62,28 @@ public class ViewProductActivity extends AppCompatActivity {
         mPagerAdapter = new ProductPagerAdapter(getSupportFragmentManager(), fragments);
         mProductContainer.setAdapter(mPagerAdapter);
         mTabLayout.setupWithViewPager(mProductContainer, true);
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        int action = event.getAction();
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                Log.i(TAG, "onTouch: Action was Down.");
+                return false;
+            case MotionEvent.ACTION_MOVE:
+                Log.i(TAG, "onTouch: Action was Move.");
+                return false;
+            case MotionEvent.ACTION_UP:
+                Log.i(TAG, "onTouch: Action was UP");
+                return false;
+            case MotionEvent.ACTION_CANCEL:
+                Log.i(TAG, "onTouch: Action was Cancel");
+                return false;
+            case MotionEvent.ACTION_OUTSIDE:
+                Log.i(TAG, "onTouch: Movement occurred outside bounds of current screen element");
+                return false;
+        }
+        return false;
     }
 }
