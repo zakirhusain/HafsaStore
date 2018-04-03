@@ -10,24 +10,29 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.hafsa.hafsastore.adapter.ProductPagerAdapter;
 import com.hafsa.hafsastore.fragments.ViewProductFragment;
 import com.hafsa.hafsastore.models.Product;
 import com.hafsa.hafsastore.resources.Products;
+import com.hafsa.hafsastore.util.CartManger;
 
 import java.util.ArrayList;
 
 public class ViewProductActivity extends AppCompatActivity implements
         View.OnTouchListener,
         GestureDetector.OnGestureListener,
-        GestureDetector.OnDoubleTapListener {
+        GestureDetector.OnDoubleTapListener,
+        View.OnClickListener {
 
     private static final String TAG = "ViewProductActivity";
 
     //widgets
     private ViewPager mProductContainer;
     private TabLayout mTabLayout;
+    private RelativeLayout mAddToCart, mCart;
     //vars
     private Product mProduct;
     private ProductPagerAdapter mPagerAdapter;
@@ -39,6 +44,12 @@ public class ViewProductActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_view_product);
         mProductContainer = findViewById(R.id.product_container);
         mTabLayout = findViewById(R.id.tab_layout);
+        mAddToCart = findViewById(R.id.add_to_cart);
+        mCart = findViewById(R.id.cart);
+
+        mAddToCart.setOnClickListener(this);
+        mCart.setOnClickListener(this);
+
         mProductContainer.setOnTouchListener(this);
         mGestureDetector = new GestureDetector(this, this);
         getIncomingIntent();
@@ -68,6 +79,13 @@ public class ViewProductActivity extends AppCompatActivity implements
         mPagerAdapter = new ProductPagerAdapter(getSupportFragmentManager(), fragments);
         mProductContainer.setAdapter(mPagerAdapter);
         mTabLayout.setupWithViewPager(mProductContainer, true);
+    }
+
+    private void addCurrentItemToCard() {
+        Product selectedProduct = ((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem())).mProduct;
+        CartManger cartManger = new CartManger(this);
+        cartManger.addItemToCart(selectedProduct);
+        Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show();
     }
 
     /*
@@ -164,5 +182,19 @@ public class ViewProductActivity extends AppCompatActivity implements
     public boolean onDoubleTapEvent(MotionEvent e) {
         Log.i(TAG, "onDoubleTapEvent: Called");
         return false;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.cart : {
+                // open cart activity
+                break;
+            }
+            case R.id.add_to_cart: {
+                addCurrentItemToCard();
+                break;
+            }
+        }
     }
 }
