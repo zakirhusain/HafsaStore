@@ -14,6 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.hafsa.hafsastore.adapter.ProductPagerAdapter;
+import com.hafsa.hafsastore.customview.MyDragShadowBuilder;
 import com.hafsa.hafsastore.fragments.ViewProductFragment;
 import com.hafsa.hafsastore.models.Product;
 import com.hafsa.hafsastore.resources.Products;
@@ -152,6 +153,9 @@ public class ViewProductActivity extends AppCompatActivity implements
     @Override
     public void onLongPress(MotionEvent e) {
         Log.i(TAG, "onLongPress: Called");
+        ViewProductFragment productFragment = ((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem()));
+        View.DragShadowBuilder shadow = new MyDragShadowBuilder(((ViewProductFragment)productFragment).mImageView, productFragment.mProduct.getImage());
+        ((ViewProductFragment)productFragment).mImageView.startDrag(null, shadow, null, 0);
     }
 
     @Override
