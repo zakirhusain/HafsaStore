@@ -22,7 +22,7 @@ public class ViewProductFragment extends Fragment {
     private static final String TAG = "ViewProductFragment";
 
     //widgets
-    private ImageView mImageView;
+    public ImageView mImageView;
     private TextView mTitle;
     private TextView mPrice;
 
