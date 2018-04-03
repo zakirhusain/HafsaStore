@@ -1,15 +1,22 @@
 package com.hafsa.hafsastore;
 
 import android.content.Intent;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Display;
+import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -26,7 +33,8 @@ public class ViewProductActivity extends AppCompatActivity implements
         View.OnTouchListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener,
-        View.OnClickListener {
+        View.OnClickListener,
+        View.OnDragListener {
 
     private static final String TAG = "ViewProductActivity";
 
@@ -34,10 +42,12 @@ public class ViewProductActivity extends AppCompatActivity implements
     private ViewPager mProductContainer;
     private TabLayout mTabLayout;
     private RelativeLayout mAddToCart, mCart;
+    private ImageView mCartIcon, mPlusIcon;
     //vars
     private Product mProduct;
     private ProductPagerAdapter mPagerAdapter;
     private GestureDetector mGestureDetector;
+    private Rect mCartPositionRectangle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +57,8 @@ public class ViewProductActivity extends AppCompatActivity implements
         mTabLayout = findViewById(R.id.tab_layout);
         mAddToCart = findViewById(R.id.add_to_cart);
         mCart = findViewById(R.id.cart);
+        mPlusIcon = findViewById(R.id.plus_image);
+        mCartIcon = findViewById(R.id.cart_image);
 
         mAddToCart.setOnClickListener(this);
         mCart.setOnClickListener(this);
@@ -55,6 +67,32 @@ public class ViewProductActivity extends AppCompatActivity implements
         mGestureDetector = new GestureDetector(this, this);
         getIncomingIntent();
         initPagerAdapter();
+    }
+
+    private void getCartPosition(){
+        mCartPositionRectangle = new Rect();
+        mCart.getGlobalVisibleRect(mCartPositionRectangle);
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+
+        mCartPositionRectangle.left = mCartPositionRectangle.left - Math.round((int)(width * 0.18));
+        mCartPositionRectangle.top = 0;
+        mCartPositionRectangle.right = width;
+        mCartPositionRectangle.bottom = mCartPositionRectangle.bottom - Math.round((int)(width * 0.03));
+    }
+
+    private void setDragMode(boolean isDragging){
+        if(isDragging){
+            mCartIcon.setVisibility(View.INVISIBLE);
+            mPlusIcon.setVisibility(View.VISIBLE);
+        }
+        else{
+            mCartIcon.setVisibility(View.VISIBLE);
+            mPlusIcon.setVisibility(View.INVISIBLE);
+        }
     }
 
     private void getIncomingIntent(){
@@ -95,6 +133,8 @@ public class ViewProductActivity extends AppCompatActivity implements
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+
+        getCartPosition();
 
         if (v.getId() == R.id.product_container) {
             mGestureDetector.onTouchEvent(event);
@@ -156,6 +196,7 @@ public class ViewProductActivity extends AppCompatActivity implements
         ViewProductFragment productFragment = ((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem()));
         View.DragShadowBuilder shadow = new MyDragShadowBuilder(((ViewProductFragment)productFragment).mImageView, productFragment.mProduct.getImage());
         ((ViewProductFragment)productFragment).mImageView.startDrag(null, shadow, null, 0);
+        shadow.getView().setOnDragListener(this);
     }
 
     @Override
@@ -188,6 +229,62 @@ public class ViewProductActivity extends AppCompatActivity implements
         return false;
     }
 
+    /*
+    * OnDragListener
+    *
+    */
+    @Override
+    public boolean onDrag(View v, DragEvent event) {
+        switch(event.getAction()) {
+
+            case DragEvent.ACTION_DRAG_STARTED:
+                Log.d(TAG, "onDrag: drag started.");
+                setDragMode(true);
+
+                return true;
+
+            case DragEvent.ACTION_DRAG_ENTERED:
+
+                return true;
+
+            case DragEvent.ACTION_DRAG_LOCATION:
+                Point currentPosition = new Point(Math.round(event.getX()), Math.round(event.getY()));
+                if (mCartPositionRectangle.contains(currentPosition.x, currentPosition.y)) {
+                    mCart.setBackgroundColor(this.getResources().getColor(R.color.blue2));
+                } else {
+                    mCart.setBackgroundColor(this.getResources().getColor(R.color.blue1));
+                }
+                return true;
+
+            case DragEvent.ACTION_DRAG_EXITED:
+
+                return true;
+
+            case DragEvent.ACTION_DROP:
+
+                Log.d(TAG, "onDrag: dropped.");
+
+                return true;
+
+            case DragEvent.ACTION_DRAG_ENDED:
+                Log.d(TAG, "onDrag: ended.");
+                Drawable background = mCart.getBackground();
+                if (background instanceof ColorDrawable) {
+                    if (((ColorDrawable)background).getColor() == getResources().getColor(R.color.blue2)) {
+                        addCurrentItemToCard();
+                    }
+                }
+                mCart.setBackground(this.getResources().getDrawable(R.drawable.blue_onclick_dark));
+                return true;
+
+            // An unknown action type was received.
+            default:
+                Log.e(TAG,"Unknown action type received by OnStartDragListener.");
+                break;
+        }
+        return false;
+    }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -201,4 +298,6 @@ public class ViewProductActivity extends AppCompatActivity implements
             }
         }
     }
+
+
 }
