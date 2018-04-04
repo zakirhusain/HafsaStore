@@ -7,7 +7,9 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.transition.Fade;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -22,6 +24,7 @@ import android.widget.Toast;
 
 import com.hafsa.hafsastore.adapter.ProductPagerAdapter;
 import com.hafsa.hafsastore.customview.MyDragShadowBuilder;
+import com.hafsa.hafsastore.fragments.FullScreenProductFragment;
 import com.hafsa.hafsastore.fragments.ViewProductFragment;
 import com.hafsa.hafsastore.models.Product;
 import com.hafsa.hafsastore.resources.Products;
@@ -127,6 +130,26 @@ public class ViewProductActivity extends AppCompatActivity implements
         Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show();
     }
 
+    private void inflateFullScreenProductFragment(){
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        FullScreenProductFragment fragment = new FullScreenProductFragment();
+
+        Bundle bundle = new Bundle();
+        Product selectedProduct =((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem())).mProduct;
+        bundle.putParcelable(getString(R.string.intent_product), selectedProduct);
+        fragment.setArguments(bundle);
+
+        // Enter Transition for New Fragment
+        Fade enterFade = new Fade();
+        enterFade.setStartDelay(1);
+        enterFade.setDuration(300);
+        fragment.setEnterTransition(enterFade);
+
+        transaction.addToBackStack(getString(R.string.fragment_full_screen_product));
+        transaction.replace(R.id.full_screen_container, fragment, getString(R.string.fragment_full_screen_product));
+        transaction.commit();
+    }
+
     /*
     *  OnTouch
     * */
@@ -220,6 +243,7 @@ public class ViewProductActivity extends AppCompatActivity implements
     @Override
     public boolean onDoubleTap(MotionEvent e) {
         Log.i(TAG, "onDoubleTap: Called");
+        inflateFullScreenProductFragment();
         return false;
     }
 
