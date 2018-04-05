@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.transition.Fade;
 import android.support.v4.app.Fragment;
@@ -34,10 +35,10 @@ import java.util.ArrayList;
 
 public class ViewProductActivity extends AppCompatActivity implements
         View.OnTouchListener,
+        View.OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener,
-        View.OnClickListener,
-        View.OnDragListener {
+        View.OnDragListener{
 
     private static final String TAG = "ViewProductActivity";
 
@@ -46,6 +47,7 @@ public class ViewProductActivity extends AppCompatActivity implements
     private TabLayout mTabLayout;
     private RelativeLayout mAddToCart, mCart;
     private ImageView mCartIcon, mPlusIcon;
+
     //vars
     private Product mProduct;
     private ProductPagerAdapter mPagerAdapter;
@@ -53,7 +55,7 @@ public class ViewProductActivity extends AppCompatActivity implements
     private Rect mCartPositionRectangle;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_product);
         mProductContainer = findViewById(R.id.product_container);
@@ -63,13 +65,36 @@ public class ViewProductActivity extends AppCompatActivity implements
         mPlusIcon = findViewById(R.id.plus_image);
         mCartIcon = findViewById(R.id.cart_image);
 
-        mAddToCart.setOnClickListener(this);
-        mCart.setOnClickListener(this);
-
         mProductContainer.setOnTouchListener(this);
         mGestureDetector = new GestureDetector(this, this);
+        mCart.setOnClickListener(this);
+        mAddToCart.setOnClickListener(this);
+
         getIncomingIntent();
         initPagerAdapter();
+    }
+
+    private void getIncomingIntent(){
+        Intent intent = getIntent();
+        if(intent.hasExtra(getString(R.string.intent_product))){
+            mProduct = intent.getParcelableExtra(getString(R.string.intent_product));
+        }
+    }
+
+    private void initPagerAdapter(){
+        ArrayList<Fragment> fragments = new ArrayList<>();
+        Products products = new Products();
+        Product[] selectedProducts = products.PRODUCT_MAP.get(mProduct.getType());
+        for(Product product: selectedProducts){
+            Bundle bundle = new Bundle();
+            bundle.putParcelable(getString(R.string.intent_product), product);
+            ViewProductFragment viewProductFragment = new ViewProductFragment();
+            viewProductFragment.setArguments(bundle);
+            fragments.add(viewProductFragment);
+        }
+        mPagerAdapter = new ProductPagerAdapter(getSupportFragmentManager(), fragments);
+        mProductContainer.setAdapter(mPagerAdapter);
+        mTabLayout.setupWithViewPager(mProductContainer, true);
     }
 
     private void getCartPosition(){
@@ -98,36 +123,11 @@ public class ViewProductActivity extends AppCompatActivity implements
         }
     }
 
-    private void getIncomingIntent(){
-        Intent intent = getIntent();
-        if(intent.hasExtra(getString(R.string.intent_product))){
-            mProduct = intent.getParcelableExtra(getString(R.string.intent_product));
-        }
-    }
-
-    private void initPagerAdapter() {
-        ArrayList<Fragment> fragments = new ArrayList<>();
-        Products products = new Products();
-        Product[] selectedProducts = products.PRODUCT_MAP.get(mProduct.getType());
-
-        for (Product product : selectedProducts) {
-            Bundle bundle = new Bundle();
-            bundle.putParcelable(getString(R.string.intent_product), product);
-            ViewProductFragment viewProductFragment = new ViewProductFragment();
-            viewProductFragment.setArguments(bundle);
-            fragments.add(viewProductFragment);
-        }
-
-        mPagerAdapter = new ProductPagerAdapter(getSupportFragmentManager(), fragments);
-        mProductContainer.setAdapter(mPagerAdapter);
-        mTabLayout.setupWithViewPager(mProductContainer, true);
-    }
-
-    private void addCurrentItemToCard() {
+    private void addCurrentItemToCart(){
         Product selectedProduct = ((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem())).mProduct;
         CartManger cartManger = new CartManger(this);
         cartManger.addItemToCart(selectedProduct);
-        Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "added to cart", Toast.LENGTH_SHORT).show();
     }
 
     private void inflateFullScreenProductFragment(){
@@ -150,119 +150,152 @@ public class ViewProductActivity extends AppCompatActivity implements
         transaction.commit();
     }
 
-    /*
-    *  OnTouch
-    * */
 
     @Override
-    public boolean onTouch(View v, MotionEvent event) {
+    public void onClick(View view) {
+
+        switch(view.getId()){
+            case R.id.cart:{
+                //open Cart Activity
+                break;
+            }
+
+            case R.id.add_to_cart:{
+                addCurrentItemToCart();
+                break;
+            }
+        }
+    }
+
+
+    /*
+        OnTouch
+     */
+
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
 
         getCartPosition();
 
-        if (v.getId() == R.id.product_container) {
-            mGestureDetector.onTouchEvent(event);
+        if(view.getId() == R.id.product_container){
+            mGestureDetector.onTouchEvent(motionEvent);
         }
-        /*
-        int action = event.getAction();
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                Log.i(TAG, "onTouch: Action was Down.");
-                return false;
-            case MotionEvent.ACTION_MOVE:
-                Log.i(TAG, "onTouch: Action was Move.");
-                return false;
-            case MotionEvent.ACTION_UP:
-                Log.i(TAG, "onTouch: Action was UP");
-                return false;
-            case MotionEvent.ACTION_CANCEL:
-                Log.i(TAG, "onTouch: Action was Cancel");
-                return false;
-            case MotionEvent.ACTION_OUTSIDE:
-                Log.i(TAG, "onTouch: Movement occurred outside bounds of current screen element");
-                return false;
-        }*/
+
+//        int action = motionEvent.getAction();
+//
+//        switch(action) {
+//            case (MotionEvent.ACTION_DOWN):
+//                Log.d(TAG, "Action was DOWN");
+//                return false;
+//            case (MotionEvent.ACTION_MOVE):
+//                Log.d(TAG, "Action was MOVE");
+//                return false;
+//            case (MotionEvent.ACTION_UP):
+//                Log.d(TAG, "Action was UP");
+//                return false;
+//            case (MotionEvent.ACTION_CANCEL):
+//                Log.d(TAG, "Action was CANCEL");
+//                return false;
+//            case (MotionEvent.ACTION_OUTSIDE):
+//                Log.d(TAG, "Movement occurred outside bounds " +
+//                        "of current screen element");
+//                return false;
+//        }
+
         return false;
     }
 
     /*
-    *
-    *  GestureDetector
-    *
-    * */
+        GestureDetector
+     */
 
     @Override
-    public boolean onDown(MotionEvent e) {
-        Log.i(TAG, "onDown: Called");
+    public boolean onDown(MotionEvent motionEvent) {
+        Log.d(TAG, "onDown: called");
         return false;
     }
 
     @Override
-    public void onShowPress(MotionEvent e) {
-        Log.i(TAG, "onShowPress: Called");
+    public void onShowPress(MotionEvent motionEvent) {
+        Log.d(TAG, "onShowPress: called.");
+
     }
 
     @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        Log.i(TAG, "onSingleTapUp: Called");
+    public boolean onSingleTapUp(MotionEvent motionEvent) {
+        Log.d(TAG, "onSingleTapUp: called.");
         return false;
     }
 
     @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        Log.i(TAG, "onScroll: Called");
+    public boolean onScroll(MotionEvent motionEvent,
+                            MotionEvent motionEvent1,
+                            float v, float v1) {
+        Log.d(TAG, "onScroll: called.");
         return false;
     }
 
     @Override
-    public void onLongPress(MotionEvent e) {
-        Log.i(TAG, "onLongPress: Called");
-        ViewProductFragment productFragment = ((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem()));
-        View.DragShadowBuilder shadow = new MyDragShadowBuilder(((ViewProductFragment)productFragment).mImageView, productFragment.mProduct.getImage());
-        ((ViewProductFragment)productFragment).mImageView.startDrag(null, shadow, null, 0);
-        shadow.getView().setOnDragListener(this);
+    public void onLongPress(MotionEvent motionEvent) {
+        Log.d(TAG, "onLongPress: called.");
+
+        ViewProductFragment fragment = ((ViewProductFragment)mPagerAdapter.getItem(mProductContainer.getCurrentItem()));
+        // Instantiates the drag shadow builder.
+        View.DragShadowBuilder myShadow = new MyDragShadowBuilder(
+                ((ViewProductFragment)fragment).mImageView, fragment.mProduct.getImage());
+
+        // Starts the drag
+        ((ViewProductFragment)fragment).mImageView.startDrag(null,  // the data to be dragged
+                myShadow,  // the drag shadow builder
+                null,      // no need to use local data
+                0          // flags (not currently used, set to 0)
+        );
+
+        myShadow.getView().setOnDragListener(this);
     }
 
     @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        Log.i(TAG, "onFling: Called");
+    public boolean onFling(MotionEvent motionEvent,
+                           MotionEvent motionEvent1,
+                           float v, float v1) {
+        Log.d(TAG, "onFling: called.");
         return false;
     }
-
 
     /*
-    *  OnDoubleTapListener
-    *
-    */
+        DoubleTap
+     */
 
     @Override
-    public boolean onSingleTapConfirmed(MotionEvent e) {
-        Log.i(TAG, "onSingleTapConfirmed: Called");
+    public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
+        Log.d(TAG, "onSingleTapConfirmed: called.");
         return false;
     }
 
     @Override
-    public boolean onDoubleTap(MotionEvent e) {
-        Log.i(TAG, "onDoubleTap: Called");
+    public boolean onDoubleTap(MotionEvent motionEvent) {
+        Log.d(TAG, "onDoubleTap: called.");
         inflateFullScreenProductFragment();
         return false;
     }
 
     @Override
-    public boolean onDoubleTapEvent(MotionEvent e) {
-        Log.i(TAG, "onDoubleTapEvent: Called");
+    public boolean onDoubleTapEvent(MotionEvent motionEvent) {
+        Log.d(TAG, "onDoubleTapEvent: called.");
         return false;
     }
 
     /*
-    * OnDragListener
-    *
-    */
+        OnDragListener
+     */
     @Override
-    public boolean onDrag(View v, DragEvent event) {
+    public boolean onDrag(View view, DragEvent event) {
+
         switch(event.getAction()) {
 
             case DragEvent.ACTION_DRAG_STARTED:
                 Log.d(TAG, "onDrag: drag started.");
+
                 setDragMode(true);
 
                 return true;
@@ -272,12 +305,17 @@ public class ViewProductActivity extends AppCompatActivity implements
                 return true;
 
             case DragEvent.ACTION_DRAG_LOCATION:
-                Point currentPosition = new Point(Math.round(event.getX()), Math.round(event.getY()));
-                if (mCartPositionRectangle.contains(currentPosition.x, currentPosition.y)) {
+
+                Point currentPoint = new Point(Math.round(event.getX()), Math.round(event.getY()));
+//                Log.d(TAG, "onDrag: x: " + currentPoint.x + ", y: " + currentPoint.y );
+
+                if(mCartPositionRectangle.contains(currentPoint.x, currentPoint.y)){
                     mCart.setBackgroundColor(this.getResources().getColor(R.color.blue2));
-                } else {
+                }
+                else{
                     mCart.setBackgroundColor(this.getResources().getColor(R.color.blue1));
                 }
+
                 return true;
 
             case DragEvent.ACTION_DRAG_EXITED:
@@ -292,36 +330,23 @@ public class ViewProductActivity extends AppCompatActivity implements
 
             case DragEvent.ACTION_DRAG_ENDED:
                 Log.d(TAG, "onDrag: ended.");
+
                 Drawable background = mCart.getBackground();
                 if (background instanceof ColorDrawable) {
-                    if (((ColorDrawable)background).getColor() == getResources().getColor(R.color.blue2)) {
-                        addCurrentItemToCard();
+                    if (((ColorDrawable) background).getColor() == getResources().getColor(R.color.blue2)) {
+                        addCurrentItemToCart();
                     }
                 }
                 mCart.setBackground(this.getResources().getDrawable(R.drawable.blue_onclick_dark));
+                setDragMode(false);
                 return true;
 
             // An unknown action type was received.
             default:
                 Log.e(TAG,"Unknown action type received by OnStartDragListener.");
                 break;
+
         }
         return false;
     }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.cart : {
-                // open cart activity
-                break;
-            }
-            case R.id.add_to_cart: {
-                addCurrentItemToCard();
-                break;
-            }
-        }
-    }
-
-
 }
